@@ -1,0 +1,25 @@
+services:
+  llm-llama-service:
+    build:
+      context: ../sentiric-llm-llama-service
+      dockerfile: Dockerfile.gpu
+      
+  stt-whisper-service:
+    build:
+      context: ../sentiric-stt-whisper-service
+      dockerfile: Dockerfile.gpu
+
+  tts-coqui-service:
+    build:
+      context: ../sentiric-tts-coqui-service
+      dockerfile: Dockerfile
+
+  knowledge-query-service:
+    build:
+      context: ../sentiric-knowledge-query-service
+      dockerfile: Dockerfile
+
+  knowledge-indexing-service:
+    build:
+      context: ../sentiric-knowledge-indexing-service
+      dockerfile: Dockerfile

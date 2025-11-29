@@ -1,0 +1,298 @@
+name: sentiric-ai-studio
+
+networks:
+  sentiric-net:
+    name: "${NETWORK_NAME:-sentiric.cloud}"
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET:-10.88.0.0/16}
+          gateway: ${NETWORK_GATEWAY:-10.88.0.1}
+
+volumes:
+  
+  # =============================================================
+  # KATMAN 1: TEMEL ALTYAPI (INFRASTRUCTURE)
+  # Platformun temel yapı taşları.
+  # =============================================================
+
+
+  # [infra]: Vektör veritabanı için standartlaştırılmış Qdrant imajı.
+  # --------------------------------------------------
+  infra-qdrant-data:
+
+  # [infra]: Temel veritabanı (Infrastructure Layer)
+  # --------------------------------------------------  
+  infra-postgres-data:
+
+  # =============================================================
+  # KATMAN 4: YAPAY ZEKA UZMAN MOTORLARI (AI EXPERT ENGINES)
+  # Gerçek AI işini yapan, potansiyel olarak yavaş başlayan servisler.
+  # =============================================================
+
+
+  # [capability-tts]: Konuşma Sentezleme Yetenekleri (TTS Capabilities)
+  # --------------------------------------------------     
+  tts-coqui-models:
+  tts-coqui-speakers:
+  tts-coqui-history:
+  tts-coqui-cache:
+
+  # [capability-stt]: Konuşma Tanıma Yetenekleri (STT Capabilities)
+  # --------------------------------------------------
+  stt-whisper-models: 
+  stt-whisper-cache:   
+
+  #  [capability-llm]: Büyük Dil Modeli Yetenekleri (LLM Capabilities)
+  # --------------------------------------------------    
+  llm-llama-models:
+  llm-llama-cache:
+
+  # =============================================================
+  # KATMAN 6: YATAY YETENEKLER (HORIZONTAL CAPABILITIES)
+  # CDR, RAG gibi platform genelindeki destek servisleri.
+  # =============================================================   
+
+  # [horizontal-capbilities]: RAG Okuma Motoru. Vektör veritabanını sorgular.
+  # --------------------------------------------------  
+  knowledge-query-models:   
+  knowledge-query-cache:
+
+  # [horizontal-capbilities]: RAG Okuma Motoru. Vektör veritabanını sorgular.
+  # --------------------------------------------------  
+  knowledge-indexing-models:   
+  knowledge-indexing-cache:  
+
+
+  # tools
+  tools-open-webui-data:
+
+services:
+  # =============================================================
+  # KATMAN 4: YAPAY ZEKA UZMAN MOTORLARI (AI EXPERT ENGINES)
+  # Gerçek AI işini yapan, potansiyel olarak yavaş başlayan servisler.
+  # =============================================================
+
+  
+  #  [capability-llm]: Büyük Dil Modeli Yetenekleri (LLM Capabilities)
+  # --------------------------------------------------    
+  llm-llama-service:
+    image: ghcr.io/sentiric/sentiric-llm-llama-service:latest-gpu
+    env_file: ["${ENV_FILE_PATH}"]
+    environment:
+      # GPU için varsayılan katman sayısını ezer
+      - LLM_LLAMA_SERVICE_GPU_LAYERS=${LLM_LLAMA_SERVICE_GPU_LAYERS:-28}    
+    volumes:
+      - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
+      - llm-llama-models:/models
+    ports:
+      - "${LLM_LLAMA_SERVICE_HTTP_PORT:-16070}:${LLM_LLAMA_SERVICE_HTTP_PORT:-16070}"
+      - "${LLM_LLAMA_SERVICE_GRPC_PORT:-16071}:${LLM_LLAMA_SERVICE_GRPC_PORT:-16071}"
+      - "${LLM_LLAMA_SERVICE_METRICS_PORT:-16072}:${LLM_LLAMA_SERVICE_METRICS_PORT:-16072}"
+    networks:
+      sentiric-net:
+        ipv4_address: ${LLM_LLAMA_SERVICE_IPV4_ADDRESS:-10.88.60.7}
+    dns:
+      - ${DISCOVERY_SERVICE_IPV4_ADDRESS:-10.88.5.1}
+      - ${PRIMARY_DNS:-8.8.8.8}
+      - ${SECONDARY_DNS:-1.1.1.1}       
+    dns_search:
+      - ${DISCOVERY_DNS_SEARCH_DOMAIN}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${LLM_LLAMA_SERVICE_HTTP_PORT}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15m # Model indirme ve dönüştürme uzun sürebilir
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]   
+
+
+  # [capability-stt]: Konuşma Tanıma Yetenekleri (STT Capabilities)
+  # -------------------------------------------------- 
+  stt-whisper-service:
+    image: ghcr.io/sentiric/sentiric-stt-whisper-service:latest-gpu
+    env_file: ["${ENV_FILE_PATH}"]
+    volumes:
+      - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
+      - stt-whisper-cache:/models
+    ports:
+      - "${STT_WHISPER_SERVICE_HTTP_PORT:-15030}:${STT_WHISPER_SERVICE_HTTP_PORT:-15030}"
+      - "${STT_WHISPER_SERVICE_GRPC_PORT:-15031}:${STT_WHISPER_SERVICE_GRPC_PORT:-15031}"
+      - "${STT_WHISPER_SERVICE_METRICS_PORT:-15032}:${STT_WHISPER_SERVICE_METRICS_PORT:-15032}"                
+    networks:
+      sentiric-net:
+        ipv4_address: ${STT_WHISPER_SERVICE_IPV4_ADDRESS:-10.88.50.3}
+    dns:
+      - ${DISCOVERY_SERVICE_IPV4_ADDRESS:-10.88.5.1}
+      - ${PRIMARY_DNS:-8.8.8.8}
+      - ${SECONDARY_DNS:-1.1.1.1}       
+    dns_search:
+      - ${DISCOVERY_DNS_SEARCH_DOMAIN}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${STT_WHISPER_SERVICE_HTTP_PORT:-15030}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10m # Modelin yüklenmesi uzun sürebilir
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]      
+    # Bu servisin doğrudan bir bağımlılığı yok.
+
+
+  # [capability-tts]: Konuşma Sentezleme Yetenekleri (TTS Capabilities)
+  # --------------------------------------------------     
+  tts-coqui-service:
+    image: ghcr.io/sentiric/sentiric-tts-coqui-service:latest 
+    env_file: ["${ENV_FILE_PATH}"]
+    volumes: 
+      - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
+      - "${ASSETS_REPO_PATH}/docs/audio/speakers/en:/app/speakers"
+      - tts-coqui-models:/root/.local/share/tts
+      - tts-coqui-history:/app/history
+      - tts-coqui-cache:/app/cache
+    ports: 
+      - "${TTS_COQUI_SERVICE_HTTP_PORT:-14030}:${TTS_COQUI_SERVICE_HTTP_PORT:-14030}"
+      - "${TTS_COQUI_SERVICE_GRPC_PORT:-14031}:${TTS_COQUI_SERVICE_GRPC_PORT:-14031}"
+      - "${TTS_COQUI_SERVICE_METRICS_PORT:-14032}:${TTS_COQUI_SERVICE_METRICS_PORT:-14032}"          
+    networks:
+      sentiric-net:
+        ipv4_address: ${TTS_COQUI_SERVICE_IPV4_ADDRESS:-10.88.40.3}  
+    dns:
+      - ${DISCOVERY_SERVICE_IPV4_ADDRESS:-10.88.5.1}
+      - ${PRIMARY_DNS:-8.8.8.8}
+      - ${SECONDARY_DNS:-1.1.1.1}    
+    dns_search:
+      - ${DISCOVERY_DNS_SEARCH_DOMAIN}               
+    restart: always   
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:14030/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3  
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]  
+
+  # =============================================================
+  # KATMAN 6: YATAY YETENEKLER (HORIZONTAL CAPABILITIES)
+  # CDR, RAG gibi platform genelindeki destek servisleri.
+  # =============================================================   
+
+#  [capability-knowledge]: Bilgi Yönetimi Yetenekleri (Knowledge Capabilities)
+  knowledge-query-service:
+    image: ghcr.io/sentiric/sentiric-knowledge-query-service:${TAG:-latest}
+    env_file: ["${ENV_FILE_PATH}"]    
+    volumes: 
+      - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
+      - knowledge-query-cache:/app/model-cache      
+    ports: 
+      - "${KNOWLEDGE_QUERY_SERVICE_HTTP_PORT:-17020}:${KNOWLEDGE_QUERY_SERVICE_HTTP_PORT:-17020}"
+      - "${KNOWLEDGE_QUERY_SERVICE_GRPC_PORT:-17021}:${KNOWLEDGE_QUERY_SERVICE_GRPC_PORT:-17021}"
+      - "${KNOWLEDGE_QUERY_SERVICE_METRICS_PORT:-17022}:${KNOWLEDGE_QUERY_SERVICE_METRICS_PORT:-17022}"            
+    networks:
+      sentiric-net:
+        ipv4_address: ${KNOWLEDGE_QUERY_SERVICE_IPV4_ADDRESS:-10.88.70.2}
+    dns:
+      - ${DISCOVERY_SERVICE_IPV4_ADDRESS:-10.88.5.1}
+      - ${PRIMARY_DNS:-8.8.8.8}
+      - ${SECONDARY_DNS:-1.1.1.1}    
+    dns_search:
+      - ${DISCOVERY_DNS_SEARCH_DOMAIN}          
+    restart: always 
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${KNOWLEDGE_QUERY_SERVICE_HTTP_PORT:-17020}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10m
+    depends_on:
+      # Altyapı Servisleri -> 'healthy' olmalı    
+      qdrant: { condition: service_healthy }
+      # Uygulama Servisleri -> Sadece 'started' olmaları yeterli      
+      knowledge-indexing-service: { condition: service_started }
+
+  #  [capability-knowledge]: Bilgi Yönetimi Yetenekleri (Knowledge Capabilities)
+  knowledge-indexing-service:
+    image: ghcr.io/sentiric/sentiric-knowledge-indexing-service:${TAG:-latest}
+    env_file: ["${ENV_FILE_PATH}"]    
+    volumes: 
+      - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
+      - knowledge-indexing-cache:/app/model-cache       
+    ports: 
+      - "${KNOWLEDGE_INDEXING_SERVICE_HTTP_PORT:-17030}:${KNOWLEDGE_INDEXING_SERVICE_HTTP_PORT:-17030}"
+      - "${KNOWLEDGE_INDEXING_SERVICE_GRPC_PORT:-17031}:${KNOWLEDGE_INDEXING_SERVICE_GRPC_PORT:-17031}"
+      - "${KNOWLEDGE_INDEXING_SERVICE_METRICS_PORT:-17032}:${KNOWLEDGE_INDEXING_SERVICE_METRICS_PORT:-17032}"              
+    networks:
+      sentiric-net:
+        ipv4_address: ${KNOWLEDGE_INDEXING_SERVICE_IPV4_ADDRESS:-10.88.70.3}
+    dns:
+      - ${DISCOVERY_SERVICE_IPV4_ADDRESS:-10.88.5.1}
+      - ${PRIMARY_DNS:-8.8.8.8}
+      - ${SECONDARY_DNS:-1.1.1.1}    
+    dns_search:
+      - ${DISCOVERY_DNS_SEARCH_DOMAIN}          
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${KNOWLEDGE_INDEXING_SERVICE_HTTP_PORT:-17030}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10m
+    depends_on:
+      # Altyapı Servisleri -> 'healthy' olmalı    
+      postgres: { condition: service_healthy }
+      qdrant: { condition: service_healthy }    
+
+  # --- UI ---
+
+  # tools
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    env_file: ["${ENV_FILE_PATH}"]     
+    volumes:
+      - tools-open-webui-data:/app/backend/data
+    ports:
+      - "3000:8080"
+    environment:
+
+      - WEBUI_NAME=Sentiric Studio
+
+      # LLM
+      - OLLAMA_BASE_URL=http://llm-llama-service:16070
+      - OPENAI_API_BASE_URL=http://llm-llama-service:16070/v1
+      - OPENAI_API_KEY=sk-sentiric-local-key
+
+      # TTS
+      - TTS_SERVICE_URL=http://tts-coqui-service:14030
+      - TTS_API_KEY=sentiric-tts-key  # opsiyonel
+
+      # STT
+      - STT_SERVICE_URL=http://stt-whisper-service:15030
+      - STT_API_KEY=sentiric-stt-key  # opsiyonel
+
+      # Knowledge / RAG
+      - KNOWLEDGE_QUERY_URL=http://knowledge-query-service:17020
+      - KNOWLEDGE_INDEXING_URL=http://knowledge-indexing-service:17030
+    networks:
+      sentiric-net:
+    restart: always
+    depends_on:
+      llm-llama-service: { condition: service_healthy }
+      knowledge-query-service: { condition: service_healthy }   
