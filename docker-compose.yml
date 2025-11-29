@@ -273,19 +273,33 @@ services:
     environment:
 
       - WEBUI_NAME=Sentiric Studio
+      
+      # EK AYARLAR ---
+      # Kullanıcıya sormadan bu ayarları uygula
+      - WEBUI_AUTH=true
 
       # LLM
       - OLLAMA_BASE_URL=http://llm-llama-service:16070
       - OPENAI_API_BASE_URL=http://llm-llama-service:16070/v1
       - OPENAI_API_KEY=sk-sentiric-local-key
 
-      # TTS
-      - TTS_SERVICE_URL=http://tts-coqui-service:14030
-      - TTS_API_KEY=sentiric-tts-key  # opsiyonel
+      # Ollama'yı devre dışı bırakıp kafa karışıklığını önleyebiliriz (İsteğe bağlı)
+      - ENABLE_OLLAMA_API=false
+      
+      # --- STT (Sizin C++ Servisiniz) ---
+      - ENABLE_STT=true
+      - STT_ENGINE=openai
+      - STT_OPENAI_API_BASE_URL=http://stt-whisper-service:15030/v1
+      - STT_OPENAI_API_KEY=sentiric-stt-key
+      - STT_MODEL_NAME=whisper-1
 
-      # STT
-      - STT_SERVICE_URL=http://stt-whisper-service:15030
-      - STT_API_KEY=sentiric-stt-key  # opsiyonel
+      # --- TTS (Sizin Coqui Servisiniz) ---
+      - ENABLE_TTS=true
+      - TTS_ENGINE=openai
+      - TTS_OPENAI_API_BASE_URL=http://tts-coqui-service:14030/v1
+      - TTS_OPENAI_API_KEY=sentiric-tts-key
+      - TTS_MODEL=tts-1
+      - TTS_VOICE=F_Narrator_Linda
 
       # Knowledge / RAG
       - KNOWLEDGE_QUERY_URL=http://knowledge-query-service:17020
