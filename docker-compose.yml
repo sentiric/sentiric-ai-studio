@@ -142,7 +142,7 @@ services:
   # [capability-tts]: Konuşma Sentezleme Yetenekleri (TTS Capabilities)
   # --------------------------------------------------     
   tts-coqui-service:
-    image: ghcr.io/sentiric/sentiric-tts-coqui-service:latest 
+    image: ghcr.io/sentiric/sentiric-tts-coqui-service:latest-gpu
     env_file: ["${ENV_FILE_PATH}"]
     volumes: 
       - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
