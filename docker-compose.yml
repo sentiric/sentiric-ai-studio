@@ -276,8 +276,21 @@ services:
       
       # EK AYARLAR ---
       # Kullanıcıya sormadan bu ayarları uygula
-      - WEBUI_AUTH=true
+      - WEBUI_AUTH=false
 
+      # --- VARSAYILAN KİŞİLİK (VoIP Asistanı) ---
+      # Buraya yazdığımız metin, her yeni sohbette gizli talimat olarak gider.
+      - DEFAULT_SYSTEM_PROMPT=Sen Sentiric platformunun Türkçe sesli asistanısın. Telefonda (VoIP) konuşuyorsun. 1. Cevapların çok kısa (maks 2 cümle) ve net olsun. 2. Asla emoji veya markdown (*kalın* vb.) kullanma. 3. Sadece Türkçe konuş. 4. Doğal ve kibar ol. 5. Bilmediğin konuda dürüst ol.      
+
+      # --- RAG ŞABLONU (Türkçe Varsayılan) ---
+      # [context] ve [query] yer tutucuları zorunludur.
+      - RAG_TEMPLATE=### Görev:\nVerilen bağlamı (context) kullanarak kullanıcının sorusunu yanıtla.\n\n### Kurallar:\n- Cevabı HER ZAMAN TÜRKÇE ver. (Dokümanlar İngilizce olsa bile çevirerek anlat).\n- Eğer cevap bağlamda yoksa, dürüstçe 'Bu bilgi dokümanlarda bulunmuyor' de.\n- Asla uydurma bilgi verme.\n- Cevabın net, anlaşılır ve profesyonel olsun.\n\n### Bağlam (Context):\n[context]\n\n### Soru:\n[query]
+
+      # --- RAG AYARLARI (Performans İçin) ---
+      - RAG_TOP_K=5       # Küçük model için ideal sayı (varsayılan 3 olabilir)
+      - RAG_CHUNK_SIZE=1500 # Kod bloklarını bölmemek için artırdık
+      - RAG_CHUNK_OVERLAP=200
+      
       # LLM
       - OLLAMA_BASE_URL=http://llm-llama-service:16070
       - OPENAI_API_BASE_URL=http://llm-llama-service:16070/v1

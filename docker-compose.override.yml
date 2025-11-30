@@ -9,6 +9,7 @@ services:
       context: ../sentiric-stt-whisper-service
       dockerfile: Dockerfile.gpu
 
+
   tts-coqui-service:
     build:
       context: ../sentiric-tts-coqui-service
