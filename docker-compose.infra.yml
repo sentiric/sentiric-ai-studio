@@ -1,3 +1,24 @@
+
+volumes:
+  
+  # =============================================================
+  # KATMAN 1: TEMEL ALTYAPI (INFRASTRUCTURE)
+  # Platformun temel yapı taşları.
+  # =============================================================
+
+
+  # [infra]: Vektör veritabanı için standartlaştırılmış Qdrant imajı.
+  # --------------------------------------------------
+  infra-qdrant-data:
+
+  # [infra]: Temel veritabanı (Infrastructure Layer)
+  # --------------------------------------------------  
+  infra-postgres-data:
+
+  # [infra]: Temel Cache (Infrastructure Layer)
+  # --------------------------------------------------  
+  infra-redis-data:
+
 services:
   # =============================================================
   # KATMAN 1: TEMEL ALTYAPI (INFRASTRUCTURE)
@@ -61,7 +82,9 @@ services:
 
 
   redis:
-    image: redis:7-alpine
+    image: ghcr.io/sentiric/sentiric-redis:latest
+    volumes:
+      - infra-redis-data:/data
     restart: always
     networks:
       - sentiric-net

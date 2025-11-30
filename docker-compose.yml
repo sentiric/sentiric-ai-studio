@@ -11,19 +11,6 @@ networks:
 
 volumes:
   
-  # =============================================================
-  # KATMAN 1: TEMEL ALTYAPI (INFRASTRUCTURE)
-  # Platformun temel yapı taşları.
-  # =============================================================
-
-
-  # [infra]: Vektör veritabanı için standartlaştırılmış Qdrant imajı.
-  # --------------------------------------------------
-  infra-qdrant-data:
-
-  # [infra]: Temel veritabanı (Infrastructure Layer)
-  # --------------------------------------------------  
-  infra-postgres-data:
 
   # =============================================================
   # KATMAN 4: YAPAY ZEKA UZMAN MOTORLARI (AI EXPERT ENGINES)
@@ -312,7 +299,7 @@ services:
       - TTS_OPENAI_API_BASE_URL=http://tts-coqui-service:14030/v1
       - TTS_OPENAI_API_KEY=sentiric-tts-key
       - TTS_MODEL=tts-1
-      - TTS_VOICE=F_Narrator_Linda
+      - TTS_VOICE=shimmer
 
       # Knowledge / RAG
       - KNOWLEDGE_QUERY_URL=http://knowledge-query-service:17020
