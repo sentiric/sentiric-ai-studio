@@ -121,7 +121,7 @@ services:
     env_file: ["${ENV_FILE_PATH}"]
     volumes:
       - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
-      - stt-whisper-cache:/models
+      - stt-whisper-models:/models
     ports:
       - "${STT_WHISPER_SERVICE_HTTP_PORT:-15030}:${STT_WHISPER_SERVICE_HTTP_PORT:-15030}"
       - "${STT_WHISPER_SERVICE_GRPC_PORT:-15031}:${STT_WHISPER_SERVICE_GRPC_PORT:-15031}"
