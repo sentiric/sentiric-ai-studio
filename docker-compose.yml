@@ -11,45 +11,35 @@ networks:
 
 volumes:
   
-
   # =============================================================
   # KATMAN 4: YAPAY ZEKA UZMAN MOTORLARI (AI EXPERT ENGINES)
-  # Gerçek AI işini yapan, potansiyel olarak yavaş başlayan servisler.
   # =============================================================
 
-
-  # [capability-tts]: Konuşma Sentezleme Yetenekleri (TTS Capabilities)
-  # --------------------------------------------------     
+  # [capability-tts]
   tts-coqui-models:
   tts-coqui-speakers:
   tts-coqui-history:
   tts-coqui-cache:
 
-  # [capability-stt]: Konuşma Tanıma Yetenekleri (STT Capabilities)
-  # --------------------------------------------------
+  # [capability-stt]
   stt-whisper-models: 
   stt-whisper-cache:   
 
-  #  [capability-llm]: Büyük Dil Modeli Yetenekleri (LLM Capabilities)
-  # --------------------------------------------------    
+  # [capability-llm]
   llm-llama-models:
   llm-llama-cache:
 
   # =============================================================
   # KATMAN 6: YATAY YETENEKLER (HORIZONTAL CAPABILITIES)
-  # CDR, RAG gibi platform genelindeki destek servisleri.
   # =============================================================   
 
-  # [horizontal-capbilities]: RAG Okuma Motoru. Vektör veritabanını sorgular.
-  # --------------------------------------------------  
+  # [horizontal-capabilities]
   knowledge-query-models:   
   knowledge-query-cache:
 
-  # [horizontal-capbilities]: RAG Okuma Motoru. Vektör veritabanını sorgular.
-  # --------------------------------------------------  
+  # [horizontal-capabilities]
   knowledge-indexing-models:   
   knowledge-indexing-cache:  
-
 
   # tools
   tools-open-webui-data:
@@ -179,10 +169,9 @@ services:
 
   # =============================================================
   # KATMAN 6: YATAY YETENEKLER (HORIZONTAL CAPABILITIES)
-  # CDR, RAG gibi platform genelindeki destek servisleri.
   # =============================================================   
 
-#  [capability-knowledge]: Bilgi Yönetimi Yetenekleri (Knowledge Capabilities)
+  #  [capability-knowledge]: Bilgi Yönetimi Yetenekleri (Knowledge Capabilities)
   knowledge-query-service:
     image: ghcr.io/sentiric/sentiric-knowledge-query-service:${TAG:-latest}
     env_file: ["${ENV_FILE_PATH}"]    
@@ -221,6 +210,8 @@ services:
     env_file: ["${ENV_FILE_PATH}"]    
     volumes: 
       - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
+      # YENİ: Yerel assetleri container içine mount ediyoruz
+      - "${ASSETS_REPO_PATH}:/opt/sentiric/assets:ro"
       - knowledge-indexing-cache:/app/model-cache       
     ports: 
       - "${KNOWLEDGE_INDEXING_SERVICE_HTTP_PORT:-17030}:${KNOWLEDGE_INDEXING_SERVICE_HTTP_PORT:-17030}"
@@ -243,13 +234,11 @@ services:
       retries: 5
       start_period: 10m
     depends_on:
-      # Altyapı Servisleri -> 'healthy' olmalı    
       postgres: { condition: service_healthy }
       qdrant: { condition: service_healthy }    
 
   # --- UI ---
-
-  # tools
+  # Open WebUI 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     env_file: ["${ENV_FILE_PATH}"]     
