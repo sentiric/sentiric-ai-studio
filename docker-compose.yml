@@ -210,9 +210,9 @@ services:
     env_file: ["${ENV_FILE_PATH}"]    
     volumes: 
       - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
-      # YENİ: Yerel assetleri container içine mount ediyoruz
-      - "${ASSETS_REPO_PATH}:/opt/sentiric/assets:ro"
-      - knowledge-indexing-cache:/app/model-cache       
+      # EKLENDİ: Host'taki assets klasörünü container içinde /opt/sentiric/assets yoluna bağlıyoruz
+      - "${ASSETS_REPO_PATH}:/opt/sentiric/assets:ro" 
+      - knowledge-indexing-cache:/app/model-cache        
     ports: 
       - "${KNOWLEDGE_INDEXING_SERVICE_HTTP_PORT:-17030}:${KNOWLEDGE_INDEXING_SERVICE_HTTP_PORT:-17030}"
       - "${KNOWLEDGE_INDEXING_SERVICE_GRPC_PORT:-17031}:${KNOWLEDGE_INDEXING_SERVICE_GRPC_PORT:-17031}"
