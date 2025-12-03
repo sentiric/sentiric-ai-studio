@@ -158,7 +158,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:14030/health"]
       interval: 30s
       timeout: 10s
-      retries: 3  
+      retries: 5      # Model yüklenmesi uzun sürebilir, retry sayısını artırdık
+      start_period: 60s # İlk açılışta grace period
     deploy:
       resources:
         reservations:
