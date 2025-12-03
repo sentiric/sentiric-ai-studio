@@ -81,7 +81,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 15m # Model indirme ve dönüştürme uzun sürebilir
+      start_period: 60m # Model indirme ve dönüştürme uzun sürebilir
     deploy:
       resources:
         reservations:
