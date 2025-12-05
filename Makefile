@@ -12,6 +12,8 @@ help:
 setup:
 	@if [ ! -f .env ]; then cp .env.example .env; echo "⚠️ .env oluşturuldu."; fi
 	@chmod +x scripts/init-certs.sh
+	@chmod +x scripts/install-deps.sh
+	@./scripts/install-deps.sh
 	@./scripts/init-certs.sh
 	
 # Geliştirme Modu: Override dosyasını kullanır (Local Build)
