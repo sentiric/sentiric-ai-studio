@@ -82,17 +82,24 @@ sudo apt-get install -y build-essential curl git htop
 ```
 
 ### 4.2. NVIDIA Sürücülerini Kur (Headless/Server Modu)
-Masaüstü araçlarına ihtiyacımız yok, sadece hesaplama gücüne ihtiyacımız var.
+Masaüstü araçlarına ihtiyacımız yok, sadece hesaplama gücüne ihtiyacımız var. Bu yüzden "server" varyasyonunu kuracağız.
 
 ```bash
-# Mevcut/varsayılan sürücüleri temizle
+# 1. Mevcut/varsayılan sürücüleri temizle
 sudo apt-get remove --purge '^nvidia-.*' -y
 sudo apt-get autoremove -y
 
-# Üretim için kararlı "server" sürücüsünü kur (RTX 3060 için 535 veya 550 uygundur)
-sudo apt-get install -y nvidia-driver-535-server
+# 2. Mevcut sürücüleri listele
+sudo apt search nvidia-driver-*-server
 
-# Sürücünün yüklenmesi için REBOOT ŞART
+# 3. En güncel "server" sürücüsünü kur
+# (Aşağıdaki komutta 580 yerine listede çıkan en yüksek sayıyı yazın)
+sudo apt-get install -y nvidia-driver-580-server
+
+# ALTERNATİF (Eğer 580 yoksa en kararlı LTS sürümü):
+# sudo apt-get install -y nvidia-driver-535-server
+
+# 4. Sürücünün ve kernel modüllerinin yüklenmesi için REBOOT ŞART
 sudo reboot
 ```
 
