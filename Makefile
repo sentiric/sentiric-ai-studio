@@ -10,9 +10,10 @@ help:
 	@echo "make logs    : Logları izler"
 
 setup:
-	@if [ ! -f .env ]; then cp .env.example .env; echo "⚠️ .env oluşturuldu, lütfen düzenleyin!"; fi
-	@if [ ! -d "../sentiric-certificates" ]; then echo "❌ '../sentiric-certificates' bulunamadı! Sertifika mount'u çalışmayacak."; exit 1; fi
-
+	@if [ ! -f .env ]; then cp .env.example .env; echo "⚠️ .env oluşturuldu."; fi
+	@chmod +x scripts/init-certs.sh
+	@./scripts/init-certs.sh
+	
 # Geliştirme Modu: Override dosyasını kullanır (Local Build)
 up: setup
 	docker compose -f docker-compose.infra.yml -f docker-compose.yml -f docker-compose.override.yml up --build -d
