@@ -93,10 +93,10 @@ sudo apt-get autoremove -y
 sudo apt search nvidia-driver-*-server
 
 # 3. En güncel "server" sürücüsünü kur
-# (Aşağıdaki komutta 580 yerine listede çıkan en yüksek sayıyı yazın)
+# (Listede çıkan en yüksek versiyonu seçin, örn: 580)
 sudo apt-get install -y nvidia-driver-580-server
 
-# ALTERNATİF (Eğer 580 yoksa en kararlı LTS sürümü):
+# ALTERNATİF (Eğer en günceli sorun çıkarırsa kararlı LTS sürümü):
 # sudo apt-get install -y nvidia-driver-535-server
 
 # 4. Sürücünün ve kernel modüllerinin yüklenmesi için REBOOT ŞART
@@ -124,17 +124,19 @@ sudo usermod -aG docker $USER
 
 ### 5.2. NVIDIA Container Toolkit
 ```bash
-# Depoyu ekle
+# 1. Depoyu ekle
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
   && curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
     sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
     sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
+# 2. Paket listesini güncelle ve kur
 sudo apt-get update
 sudo apt-get install -y nvidia-container-toolkit
 
-# Docker'ı yapılandır
+# 3. Docker'ı yapılandır
 sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl daemon-reload
 sudo systemctl restart docker
 ```
 
