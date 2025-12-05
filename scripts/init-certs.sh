@@ -2,7 +2,8 @@
 set -e
 
 # Sertifika dizini (Proje içinde yerel)
-CERTS_DIR="./certs"
+CERTIFICATES_REPO_PATH="../sentiric-certificates"
+CERTS_DIR="$CERTIFICATES_REPO_PATH/certs"
 mkdir -p "$CERTS_DIR"
 
 echo "🔐 Sertifika Kurulumu Başlatılıyor..."
