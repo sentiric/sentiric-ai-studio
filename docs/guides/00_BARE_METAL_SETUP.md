@@ -24,17 +24,64 @@ Bu rehber, NVIDIA GPU'lu bir sunucuyu (örn: RTX 3060) Sentiric AI platformunu �
 
 ---
 
-## 🛠️ BÖLÜM 3: Sistem ve Sürücü Kurulumu
+## 🔐 BÖLÜM 3: Uzaktan Erişim ve Güvenli Ağ (SSH & Tailscale)
 
-Sunucu açıldıktan sonra SSH ile bağlanın ve aşağıdaki komutları sırasıyla çalıştırın.
+Kurulum bittikten sonra makineye fiziksel erişimi kesip uzaktan yönetime geçeceğiz.
 
-### 3.1. Sistemi Güncelle
+### 3.1. SSH Anahtarı Kurulumu (Yönetici Bilgisayarından)
+*Bu adımı kendi bilgisayarınızdan yapın, sunucudan değil.*
+
+```bash
+# 1. Eğer anahtarınız yoksa oluşturun (Varsa atlayın)
+ssh-keygen -t ed25519 -C "admin@sentiric.ai"
+
+# 2. Anahtarı sunucuya gönderin (Parola soracak)
+ssh-copy-id -i ~/.ssh/id_ed25519.pub ubuntu@SUNUCU_YEREL_IPSI
+
+# 3. Test edin (Parola sormamalı)
+ssh ubuntu@SUNUCU_YEREL_IPSI
+```
+
+### 3.2. Parola Girişini Kapatma (Sunucu İçinden)
+SSH ile bağlandıktan sonra güvenliği artırmak için parola ile girişi kapatın.
+
+```bash
+# Konfigürasyonu düzenle
+sudo nano /etc/ssh/sshd_config
+# Şu satırı bul ve değiştir: PasswordAuthentication no
+
+# Servisi yeniden başlat
+sudo service ssh restart
+```
+
+### 3.3. Tailscale Kurulumu (VPN'siz Erişim)
+Sunucu NAT arkasında olsa bile erişebilmek için Tailscale kuruyoruz.
+
+```bash
+# 1. Kurulum
+curl -fsSL https://tailscale.com/install.sh | sh
+
+# 2. Başlatma (Size bir URL verecek, tarayıcıda açıp onaylayın)
+sudo tailscale up
+
+# 3. IP'yi Öğrenme
+tailscale ip -4
+```
+*Artık bu makineye dünyanın her yerinden Tailscale IP'si ile erişebilirsiniz.*
+
+---
+
+## 🛠️ BÖLÜM 4: Sistem ve Sürücü Kurulumu
+
+Tailscale veya SSH üzerinden bağlandıktan sonra aşağıdaki komutları sırasıyla çalıştırın.
+
+### 4.1. Sistemi Güncelle
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y
 sudo apt-get install -y build-essential curl git htop
 ```
 
-### 3.2. NVIDIA Sürücülerini Kur (Headless/Server Modu)
+### 4.2. NVIDIA Sürücülerini Kur (Headless/Server Modu)
 Masaüstü araçlarına ihtiyacımız yok, sadece hesaplama gücüne ihtiyacımız var.
 
 ```bash
@@ -53,11 +100,11 @@ sudo reboot
 
 ---
 
-## 🐳 BÖLÜM 4: Docker ve NVIDIA Container Toolkit
+## 🐳 BÖLÜM 5: Docker ve NVIDIA Container Toolkit
 
 Yapay zeka konteynerlerinin GPU'ya erişebilmesi için bu adım zorunludur.
 
-### 4.1. Docker Kurulumu
+### 5.1. Docker Kurulumu
 ```bash
 # Resmi Docker kurulum scripti
 curl -fsSL https://get.docker.com -o get-docker.sh
@@ -68,7 +115,7 @@ sudo usermod -aG docker $USER
 ```
 *(Bu aşamada oturumu kapatıp açmanız (logout/login) gerekir)*
 
-### 4.2. NVIDIA Container Toolkit
+### 5.2. NVIDIA Container Toolkit
 ```bash
 # Depoyu ekle
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg \
@@ -84,7 +131,7 @@ sudo nvidia-ctk runtime configure --runtime=docker
 sudo systemctl restart docker
 ```
 
-### 4.3. Nihai Doğrulama
+### 5.3. Nihai Doğrulama
 Aşağıdaki komut hata vermeden GPU bilgilerini göstermelidir:
 ```bash
 docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
@@ -92,17 +139,20 @@ docker run --rm --runtime=nvidia --gpus all ubuntu nvidia-smi
 
 ---
 
-## 🚀 BÖLÜM 5: Sentiric AI Studio Kurulumu
+## 🚀 BÖLÜM 6: Sentiric AI Studio Kurulumu
 
 ```bash
 # 1. Repoyu çek
 git clone https://github.com/sentiric/sentiric-ai-studio.git
 cd sentiric-ai-studio
 
-# 2. Yapılandırma
-cp .env.example .env
-# .env dosyasını düzenle (Gerekirse)
+# 2. Kurulumu Başlat (Sertifikalar otomatik üretilir)
+make setup
 
-# 3. Başlat
+# 3. Yapılandırma (.env dosyasını kontrol et)
+nano .env
+# CERTIFICATES_REPO_PATH=./certs olduğundan emin ol
+
+# 4. Servisleri Başlat
 make prod
 ```
