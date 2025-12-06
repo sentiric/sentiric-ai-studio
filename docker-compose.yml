@@ -238,7 +238,7 @@ services:
       postgres: { condition: service_healthy }
       qdrant: { condition: service_healthy }    
 
-  # --- UI ---
+# --- UI ---
   # Open WebUI 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
@@ -248,16 +248,37 @@ services:
     ports:
       - "3000:8080"
     environment:
-
       - WEBUI_NAME=Sentiric Studio
-      
-      # EK AYARLAR ---
-      # Kullanıcıya sormadan bu ayarları uygula
       - WEBUI_AUTH=false
+
+      # --- LLM (Zaten çalışıyor ama netleştirelim) ---
+      - OPENAI_API_BASE_URL=http://llm-llama-service:16070/v1
+      - OPENAI_API_KEY=sk-sentiric-local
+      - ENABLE_OLLAMA_API=false
 
       # --- VARSAYILAN KİŞİLİK (VoIP Asistanı) ---
       # Buraya yazdığımız metin, her yeni sohbette gizli talimat olarak gider.
-      - DEFAULT_SYSTEM_PROMPT=Sen Sentiric platformunun Türkçe sesli asistanısın. Telefonda (VoIP) konuşuyorsun. 1. Cevapların çok kısa (maks 2 cümle) ve net olsun. 2. Asla emoji veya markdown (*kalın* vb.) kullanma. 3. Sadece Türkçe konuş. 4. Doğal ve kibar ol. 5. Bilmediğin konuda dürüst ol.      
+      - DEFAULT_SYSTEM_PROMPT=Sen Sentiric platformunun Türkçe sesli asistanısın. Telefonda (VoIP) konuşuyorsun. 1. Cevapların çok kısa (maks 2 cümle) ve net olsun. 2. Asla emoji veya markdown (*kalın* vb.) kullanma. 3. Sadece Türkçe konuş. 4. Doğal ve kibar ol. 5. Bilmediğin konuda dürüst ol.
+
+      # --- STT (WHISPER SERVICE ENTEGRASYONU) ---
+      # 'openai' motorunu seçerek, URL'i bizim servise yönlendiriyoruz.
+      - AUDIO_STT_ENGINE=openai
+      - AUDIO_STT_OPENAI_API_BASE_URL=http://stt-whisper-service:15030/v1
+      - AUDIO_STT_OPENAI_API_KEY=sk-sentiric-stt
+      # Model adı 'whisper-1' olarak kalmalı (protokol gereği)
+      - AUDIO_STT_MODEL=whisper-1
+
+      # --- TTS (COQUI SERVICE ENTEGRASYONU) ---
+      # 'openai' motorunu seçerek, URL'i bizim servise yönlendiriyoruz.
+      - AUDIO_TTS_ENGINE=openai
+      - AUDIO_TTS_OPENAI_API_BASE_URL=http://tts-coqui-service:14030/v1
+      - AUDIO_TTS_OPENAI_API_KEY=sk-sentiric-tts
+      # Varsayılan ses (Bizim endpoint map edecek)
+      - AUDIO_TTS_VOICE=F_TR_Parlak_Zeynep/neutral
+
+      # RAG
+      - KNOWLEDGE_QUERY_URL=http://knowledge-query-service:17020
+      - KNOWLEDGE_INDEXING_URL=http://knowledge-indexing-service:17030
 
       # --- RAG ŞABLONU (Türkçe Varsayılan) ---
       # [context] ve [query] yer tutucuları zorunludur.
@@ -266,37 +287,12 @@ services:
       # --- RAG AYARLARI (Performans İçin) ---
       - RAG_TOP_K=5       # Küçük model için ideal sayı (varsayılan 3 olabilir)
       - RAG_CHUNK_SIZE=1500 # Kod bloklarını bölmemek için artırdık
-      - RAG_CHUNK_OVERLAP=200
+      - RAG_CHUNK_OVERLAP=200      
       
-      # LLM
-      - OLLAMA_BASE_URL=http://llm-llama-service:16070
-      - OPENAI_API_BASE_URL=http://llm-llama-service:16070/v1
-      - OPENAI_API_KEY=sk-sentiric-local-key
-
-      # Ollama'yı devre dışı bırakıp kafa karışıklığını önleyebiliriz (İsteğe bağlı)
-      - ENABLE_OLLAMA_API=false
-      
-      # --- STT (Sizin C++ Servisiniz) ---
-      - ENABLE_STT=true
-      - STT_ENGINE=openai
-      - STT_OPENAI_API_BASE_URL=http://stt-whisper-service:15030/v1
-      - STT_OPENAI_API_KEY=sentiric-stt-key
-      - STT_MODEL_NAME=whisper-1
-
-      # --- TTS (Sizin Coqui Servisiniz) ---
-      - ENABLE_TTS=true
-      - TTS_ENGINE=openai
-      - TTS_OPENAI_API_BASE_URL=http://tts-coqui-service:14030/v1
-      - TTS_OPENAI_API_KEY=sentiric-tts-key
-      - TTS_MODEL=tts-1
-      - TTS_VOICE=shimmer
-
-      # Knowledge / RAG
-      - KNOWLEDGE_QUERY_URL=http://knowledge-query-service:17020
-      - KNOWLEDGE_INDEXING_URL=http://knowledge-indexing-service:17030
     networks:
       sentiric-net:
     restart: always
     depends_on:
       llm-llama-service: { condition: service_healthy }
-      knowledge-query-service: { condition: service_healthy }   
+      stt-whisper-service: { condition: service_healthy }
+      tts-coqui-service: { condition: service_healthy }
