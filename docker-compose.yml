@@ -136,7 +136,7 @@ services:
     env_file: ["${ENV_FILE_PATH}"]
     volumes: 
       - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
-      - "${ASSETS_REPO_PATH}/docs/audio/speakers/en:/app/speakers"
+      - "${ASSETS_REPO_PATH}/docs/audio/speakers:/app/speakers"
       - tts-coqui-models:/root/.local/share/tts
       - tts-coqui-history:/app/history
       - tts-coqui-cache:/app/cache
@@ -174,7 +174,7 @@ services:
 
   #  [capability-knowledge]: Bilgi Yönetimi Yetenekleri (Knowledge Capabilities)
   knowledge-query-service:
-    image: ghcr.io/sentiric/sentiric-knowledge-query-service:${TAG:-latest}
+    image: ghcr.io/sentiric/sentiric-knowledge-query-service:gpu
     env_file: ["${ENV_FILE_PATH}"]    
     volumes: 
       - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
@@ -207,7 +207,7 @@ services:
 
   #  [capability-knowledge]: Bilgi Yönetimi Yetenekleri (Knowledge Capabilities)
   knowledge-indexing-service:
-    image: ghcr.io/sentiric/sentiric-knowledge-indexing-service:${TAG:-latest}
+    image: ghcr.io/sentiric/sentiric-knowledge-indexing-service:gpu
     env_file: ["${ENV_FILE_PATH}"]    
     volumes: 
       - "${CERTIFICATES_REPO_PATH}:/sentiric-certificates:ro"
